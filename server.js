@@ -1,5 +1,4 @@
 const express = require("express");
-const crypto = require("crypto");
 
 const app = express();
 
@@ -25,22 +24,30 @@ app.post("/webhook", async (req, res) => {
       const replyToken = event.replyToken;
       const userMessage = event.message.text;
 
-      await fetch("https://api.line.me/v2/bot/message/reply", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
-        },
-        body: JSON.stringify({
-          replyToken: replyToken,
-          messages: [
-            {
-              type: "text",
-              text: `ได้รับข้อความแล้วครับ 👋\nคุณพิมพ์ว่า: ${userMessage}`
-            }
-          ]
-        })
-      });
+      const response = await fetch(
+        "https://api.line.me/v2/bot/message/reply",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
+          },
+          body: JSON.stringify({
+            replyToken: replyToken,
+            messages: [
+              {
+                type: "text",
+                text: `ได้รับข้อความแล้วครับ 👋\nคุณพิมพ์ว่า: ${userMessage}`
+              }
+            ]
+          })
+        }
+      );
+
+      const result = await response.text();
+
+      console.log("LINE Reply Status:", response.status);
+      console.log("LINE Reply Response:", result);
     }
 
     res.sendStatus(200);
