@@ -1,8 +1,13 @@
 const express = require("express");
+const OpenAI = require("openai");
 
 const app = express();
 
 app.use(express.json());
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 app.get("/", (req, res) => {
   res.send("Clinic AI Backend is running!");
@@ -19,11 +24,38 @@ app.post("/webhook", async (req, res) => {
       return res.sendStatus(200);
     }
 
-    // ตอบเฉพาะข้อความ Text
+    // รับเฉพาะข้อความตัวอักษร
     if (event.type === "message" && event.message.type === "text") {
       const replyToken = event.replyToken;
       const userMessage = event.message.text;
 
+      console.log("User:", userMessage);
+
+      // ส่งข้อความไปให้ OpenAI
+      const aiResponse = await openai.responses.create({
+        model: "gpt-5.6-luna",
+        instructions: `
+คุณคือ AI Assistant ของคลินิก
+
+หน้าที่:
+- ตอบคำถามด้านสุขภาพและโภชนาการเบื้องต้น
+- ใช้ภาษาที่สุภาพ เป็นมิตร และเข้าใจง่าย
+- ตอบกระชับ ไม่ยาวเกินความจำเป็น
+
+ข้อจำกัด:
+- ห้ามวินิจฉัยโรค
+- ห้ามสั่ง หยุด หรือปรับยา
+- ห้ามแทนที่แพทย์หรือบุคลากรทางการแพทย์
+- หากคำถามมีความเสี่ยงสูงหรือเกี่ยวข้องกับอาการรุนแรง ให้แนะนำให้ติดต่อบุคลากรทางการแพทย์
+        `,
+        input: userMessage
+      });
+
+      const aiText = aiResponse.output_text;
+
+      console.log("AI:", aiText);
+
+      // ส่งคำตอบกลับไป LINE
       const response = await fetch(
         "https://api.line.me/v2/bot/message/reply",
         {
@@ -37,7 +69,7 @@ app.post("/webhook", async (req, res) => {
             messages: [
               {
                 type: "text",
-                text: `ได้รับข้อความแล้วครับ 👋\nคุณพิมพ์ว่า: ${userMessage}`
+                text: aiText
               }
             ]
           })
