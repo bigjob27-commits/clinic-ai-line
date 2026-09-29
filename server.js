@@ -9,13 +9,14 @@ app.get("/", (req, res) => {
 });
 
 app.post("/webhook", (req, res) => {
-  console.log("LINE Webhook:", JSON.stringify(req.body, null, 2));
+  console.log("LINE Webhook:");
+  console.log(JSON.stringify(req.body, null, 2));
 
   res.sendStatus(200);
 });
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
